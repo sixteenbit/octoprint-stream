@@ -36,12 +36,57 @@
     <img class="img-fluid mx-auto d-block" src="./?action=stream" alt="Stream">
 </div>
 
+<ul class="list-group list-group-flush">
+    <li class="list-group-item"><strong>Status:</strong> <span data-bind="text: state">unknown</span></li>
+    <li class="list-group-item"><strong>Bed temp:</strong> A:<span data-bind="text: bedTempActual"></span> | T:<span data-bind="text: bedTempTarget"></span></li>
+    <li class="list-group-item"><strong>Tool 0 temp:</strong> A:<span data-bind="text: toolTempActual"></span> | T:<span data-bind="text: toolTempTarget">t</span></li>
+    <li class="list-group-item">Pi Temp: (temp)[get this from the navbar temp plugin?]</li>
+    <li class="list-group-item">Current print time: <span data-bind="text: progressPrintTime"></span></li>
+    <li class="list-group-item">File name: <span data-bind="text: fileName"></span></li>
+</ul>
 
-<!-- Optional JavaScript -->
+
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 <script defer src="https://use.fontawesome.com/releases/v5.4.1/js/all.js" integrity="sha384-L469/ELG4Bg9sDQbl0hvjMq8pOcqFgkSpwhwnslzvVVGpDjYJ6wJJyYjvG3u8XW7" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js" integrity="sha256-owX7sroiO/O1a7h3a4X29A1g3QgqdNvijRQ7V5TH45M=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout.mapping/2.4.1/knockout.mapping.min.js" integrity="sha256-gaGobNk1cPaj0abcVmyZxUYgCPsueCJwN5i4DjC4BS0=" crossorigin="anonymous"></script>
+<script type="application/JavaScript">
+    var hostName = "",
+        apiKey = "",
+        apiJob = "http://" + hostName + "/api/job?apikey=" + apiKey,
+        apiPrinter = "http://" + hostName + "/api/printer?apikey=" + apiKey;
+
+    function getJob() {
+        var self = this;
+        self.state = ko.observable();
+        self.progressPrintTime = ko.observable();
+        self.fileName = ko.observable();
+        self.bedTempTarget = ko.observable();
+        self.bedTempActual = ko.observable();
+        self.toolTempTarget = ko.observable();
+        self.toolTempActual = ko.observable();
+
+
+        $.getJSON(apiJob, function (data) {
+            self.state(data.state);
+            self.progressPrintTime(data.progress.printTime);
+            self.fileName(data.job.file.name);
+        });
+        $.getJSON(apiPrinter, function (pData) {
+            console.log("Connected to printer api?");
+            self.bedTempTarget(pData.temperature.bed.target);
+            self.bedTempActual(pData.temperature.bed.actual);
+            self.toolTempTarget(pData.temperature.tool0.target);
+            self.toolTempActual(pData.temperature.tool0.actual);
+        });
+    }
+
+    var getJobz = new getJob();
+    window.setInterval(getJobz.update, 1000);
+    ko.applyBindings(getJobz);
+</script>
 </body>
 </html>
